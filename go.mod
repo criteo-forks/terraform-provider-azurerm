@@ -1,5 +1,7 @@
 module github.com/terraform-providers/terraform-provider-azurerm
 
+replace github.com/terraform-providers/terraform-provider-azurerm => ./
+
 require (
 	github.com/Azure/azure-sdk-for-go v31.1.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.3.0
