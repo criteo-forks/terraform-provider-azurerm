@@ -4,30 +4,34 @@ services:
 - docker
 language: go
 go:
-- "1.12.x"
-
-branches:
-  only:
-    - master
-
+- 1.12.x
+script:
+- export VERSION=$(echo $TRAVIS_TAG | sed 's/^v//')
+- make fmt
+- gofmt -s -w main.go
+- make -j 3 pkg/bin/windows_amd64/terraform-provider-azurerm.exe
+- make -j 3 pkg/bin/linux_amd64/terraform-provider-azurerm
+- make -j 3 pkg/bin/darwin_amd64/terraform-provider-azurerm
 install:
-  # This script is used by the Travis build to install a cookie for
-  # go.googlesource.com so rate limits are higher when using `go get` to fetch
-  # packages that live there.
-  # See: https://github.com/golang/go/issues/12933
-  - bash scripts/gogetcookie.sh
-  - make tools
-
+- bash scripts/gogetcookie.sh
+- make tools
 matrix:
   fast_finish: true
   allow_failures:
-    - go: tip
-  include:
-    - name: "make lint"
-      script: GOGC=20 make lint
-    - name: "make test"
-      script: make test
-    - name: "make website-lint"
-      script: make website-lint
-    - name: "make website-test"
-      script: make website-test
+  - go: tip
+before_deploy:
+- echo "Deploying $VERSION to GitHub releases"
+- for d  in $(find ./pkg/bin -maxdepth 1 -mindepth 1 -type d | cut -d '/' -f4); do
+  tar czf terraform-provider-azurerm-${VERSION}.${d}.tar.gz -C ./pkg/bin/${d} . ;
+  done
+deploy:
+  provider: releases
+  api_key:
+    secure: DUdDpihVe2jtbO6Vwj9RWEZjkz5KECj7xBW5WrJ67bJskjAMI9wHXPPbhOuDJUmCU6f+Pu67FT2dIy7fZKqIyGw2kO4eSM7vyL1AzvTV3MDOcarMcm2m7LcQllx7L6wXu7qCevVSFhPBK+QAUEcnQaz6bWAfWH5Pqxr65d0l6B9iiLvdWBHLhfCwN8EgkZoFjfNFj1vh11dLs49vczrWSGs9Y0kDnRNyYzE5jvGFOoS8ojyKTGlUdXh82RawhoOtnGTC0Y1rGdJ07KHtTN+rldVXVCU2USs+uzBAukTX0QvcR9tnfbv3uwhZN0zxu4rkd6EAX9UvQVK2OOLRLgZsizHCKEuj6Aby5QlxA0xCMWKjgVg5TWNXsHlx7nV75cKuSDvgiyO4YjAg1nhpPMrvhMHw77yHXiybGIfxmxwEiHV8ruHjtHly6xAqmQn3WQaDRWnPrpqmUALES/7MYdh+9xr4Ku7ftzGDs7PyI3OHSsyncRBQyC8hE/w932dnbggD/OaO49JxVii0mwSLOqhN6dtE4ooJ9BhThpqiDsUjRe6My0BcGs4qELnpVPHfA77/yVctGwWApx8f7XzXfgkYze/PojxxHG4d0ogzaA8M8roAugXJgb/sMqvu9ioHBNif6lcD1c0+hFrghAY3IdfOCAk5Vxonen6AS2O8C3Pg5ZU=
+  file_glob: true
+  skip_cleanup: true
+  file: terraform-provider-azurerm-${VERSION}.*.tar.gz
+
+  on:
+    repo: criteo-forks/terraform-provider-azurerm
+    tags: true
