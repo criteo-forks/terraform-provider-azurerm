@@ -76,3 +76,18 @@ endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
 .PHONY: build build-docker test test-docker testacc vet fmt fmtcheck errcheck test-compile website website-test
+
+pkg/bin/windows_amd64/terraform-provider-azurerm.exe:
+	mkdir -p pkg/bin/windows_amd64
+	GOOS=windows GOARCH=amd64 go build -o pkg/bin/windows_amd64/terraform-provider-azurerm.exe
+
+pkg/bin/linux_amd64/terraform-provider-azurerm:
+	mkdir -p pkg/bin/linux_amd64
+	GOOS=linux GOARCH=amd64 go build -o pkg/bin/linux_amd64/terraform-provider-azurerm
+
+pkg/bin/darwin_amd64/terraform-provider-azurerm:
+	mkdir -p pkg/bin/darwin_amd64
+	GOOS=darwin GOARCH=amd64 go build -o pkg/bin/darwin_amd64/terraform-provider-azurerm
+
+multiarch: pkg/bin/windows_amd64/terraform-provider-azurerm.exe pkg/bin/linux_amd64/terraform-provider-azurerm pkg/bin/darwin_amd64/terraform-provider-azurerm
+
